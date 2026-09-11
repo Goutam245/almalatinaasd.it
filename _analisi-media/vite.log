@@ -1,0 +1,15 @@
+
+  VITE v5.4.21  ready in 805 ms
+
+  ➜  Local:   http://localhost:5177/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+1:13:03 AM [vite] hmr update /src/admin/Pannello.tsx, /src/index.css
+1:13:04 AM [vite] hmr invalidate /src/admin/Pannello.tsx Could not Fast Refresh ("differenzeDaBase" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+1:13:04 AM [vite] hmr update /src/App.tsx, /src/index.css
+2:05:27 AM [vite] vite.config.ts changed, restarting server...
+2:05:28 AM [vite] server restarted.
+2:06:32 AM [vite] vite.config.ts changed, restarting server...
+2:06:32 AM [vite] server restarted.
+2:08:18 AM [vite] vite.config.ts changed, restarting server...
+2:08:18 AM [vite] server restarted.

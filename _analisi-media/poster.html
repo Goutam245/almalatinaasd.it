@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="it">
+<head><meta charset="utf-8" /><title>Poster</title>
+<style>body{background:#111;color:#eee;font:12px ui-monospace,monospace;padding:8px}
+img{max-width:230px;display:block;margin:4px 0;border:1px solid #333}</style></head>
+<body>
+<div id="log">avvio…</div>
+<script>
+// Estrae un fotogramma-poster da ogni video e lo salva su disco via POST /save.
+// Il poster elimina il lampo nero/bianco prima che il video parta.
+const JOBS = [
+  { v: 'v01-hero-latin-couple.mp4', t: 12.8, w: 1280, name: 'v01-hero' },
+  { v: 'v09-latin-dance-2.mp4',     t: 22.5, w: 1600, name: 'v09-palco' },
+  { v: 'v10-latin-dance-1.mp4',     t:  3.9, w: 1280, name: 'v10-orchestra' },
+  { v: 'v06-dance-class-3.mp4',     t:  6.6, w: 1280, name: 'v06-bambini' },
+  { v: 'v03-stock-8933725.mp4',     t: 12.7, w: 1080, name: 'v03-ballerina' },
+  { v: 'v11-latin-dance-0.mp4',     t:  8.5, w: 1080, name: 'v11-abbraccio' },
+  { v: 'v05-stock-8462478.mp4',     t: 11.2, w: 1080, name: 'v05-passo-a-due' },
+  { v: 'v07-dance-class-2.mp4',     t:  9.9, w: 1080, name: 'v07-sbarra' },
+  { v: 'v04-stock-10640373.mp4',    t:  3.1, w:  900, name: 'v04-braccia' },
+  { v: 'v02-stock-13689416.mp4',    t:  1.5, w:  900, name: 'v02-contemporanea' },
+]
+const log = m => { document.getElementById('log').textContent += '\n' + m }
+const once = (el, ev) => new Promise(r => el.addEventListener(ev, r, { once: true }))
+
+;(async () => {
+  for (const j of JOBS) {
+    try {
+      const vid = document.createElement('video')
+      vid.src = '/video/' + j.v; vid.muted = true; vid.preload = 'auto'
+      await once(vid, 'loadedmetadata')
+      vid.currentTime = Math.min(j.t, vid.duration - 0.1)
+      await once(vid, 'seeked')
+      const h = Math.round(j.w * vid.videoHeight / vid.videoWidth)
+      const cv = document.createElement('canvas'); cv.width = j.w; cv.height = h
+      cv.getContext('2d').drawImage(vid, 0, 0, j.w, h)
+      const dataUrl = cv.toDataURL('image/webp', 0.72)
+      const res = await fetch('/save', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: j.name + '.webp', data: dataUrl }),
+      })
+      const txt = await res.text()
+      log(`${j.name}  ${j.w}x${h}  ${Math.round(dataUrl.length / 1366)}KB  ${txt}`)
+      const im = document.createElement('img'); im.src = dataUrl; document.body.append(im)
+    } catch (e) { log('ERRORE ' + j.name + ': ' + e.message) }
+  }
+  document.title = 'DONE'
+  log('--- FINITO ---')
+})()
+</script>
+</body></html>
