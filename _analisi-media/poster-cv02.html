@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="it">
+<head><meta charset="utf-8" /><title>Poster</title>
+<style>body{background:#111;color:#eee;font:12px ui-monospace,monospace;padding:8px}
+img{max-width:230px;display:block;margin:4px 0;border:1px solid #333}</style></head>
+<body>
+<div id="log">avvio…</div>
+<script>
+// Estrae un fotogramma-poster da ogni video e lo salva su disco via POST /save.
+// Il poster elimina il lampo nero/bianco prima che il video parta.
+const JOBS = [
+  { v: 'cv02.mp4', t: 10.2, w: 848, name: 'cv02-fitness' },
+]
+const log = m => { document.getElementById('log').textContent += '\n' + m }
+const once = (el, ev) => new Promise(r => el.addEventListener(ev, r, { once: true }))
+
+;(async () => {
+  for (const j of JOBS) {
+    try {
+      const vid = document.createElement('video')
+      vid.src = '/cliente/' + j.v; vid.muted = true; vid.preload = 'auto'
+      await once(vid, 'loadedmetadata')
+      vid.currentTime = Math.min(j.t, vid.duration - 0.1)
+      await once(vid, 'seeked')
+      const h = Math.round(j.w * vid.videoHeight / vid.videoWidth)
+      const cv = document.createElement('canvas'); cv.width = j.w; cv.height = h
+      cv.getContext('2d').drawImage(vid, 0, 0, j.w, h)
+      const dataUrl = cv.toDataURL('image/webp', 0.72)
+      const res = await fetch('/save', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: j.name + '.webp', data: dataUrl }),
+      })
+      const txt = await res.text()
+      log(`${j.name}  ${j.w}x${h}  ${Math.round(dataUrl.length / 1366)}KB  ${txt}`)
+      const im = document.createElement('img'); im.src = dataUrl; document.body.append(im)
+    } catch (e) { log('ERRORE ' + j.name + ': ' + e.message) }
+  }
+  document.title = 'DONE'
+  log('--- FINITO ---')
+})()
+</script>
+</body></html>
