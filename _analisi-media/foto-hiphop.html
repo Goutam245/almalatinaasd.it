@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<title>Contact sheet foto</title>
+<style>
+  body { margin:0; background:#0d0d11; color:#fff; font:12px system-ui, sans-serif; }
+  .grid { display:grid; grid-template-columns:repeat(3, 260px); gap:4px; padding:4px; }
+  figure { margin:0; position:relative; background:#000; height:174px; overflow:hidden; }
+  img { width:100%; height:100%; object-fit:cover; display:block; }
+  figcaption { position:absolute; left:0; right:0; bottom:0; background:rgba(0,0,0,.82);
+    color:#ffe37a; font:10px/1.2 ui-monospace, monospace; padding:2px 4px; }
+  .idx { position:absolute; top:0; left:0; background:#e0148c; color:#fff;
+    font:bold 12px ui-monospace, monospace; padding:1px 6px; }
+</style>
+</head>
+<body>
+<div class="grid" id="g"></div>
+<script>
+const FILES = [
+ 'hh01.jpg',
+ 'hh02.jpg',
+ 'hh03.jpg',
+ 'hh04.jpg',
+ 'hh05.jpg',
+ 'hh06.jpg',
+ 'hh07.jpg',
+ 'hh08.jpg',
+]
+const from = parseInt(new URLSearchParams(location.search).get('from') || '0', 10)
+const to   = parseInt(new URLSearchParams(location.search).get('to')   || '6', 10)
+let pending = 0
+FILES.slice(from, to).forEach((f, i) => {
+  const fig = document.createElement('figure')
+  const img = document.createElement('img')
+  pending++
+  img.onload = img.onerror = () => { if (--pending === 0) document.title = 'DONE' }
+  img.src = '/cliente/' + f
+  const cap = document.createElement('figcaption'); cap.textContent = f.replace('pexels-','')
+  const idx = document.createElement('div'); idx.className='idx'; idx.textContent = (from+i)
+  fig.append(img, cap, idx); document.getElementById('g').append(fig)
+})
+</script>
+</body>
+</html>

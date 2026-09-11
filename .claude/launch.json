@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "alma-latina",
+      "url": "http://localhost:5177",
+      "port": 5177,
+      "autoPort": false
+    }
+  ]
+}

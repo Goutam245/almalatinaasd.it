@@ -1,0 +1,13 @@
+# Ricaduta SPA — Cloudflare Pages / Netlify.
+#
+# Il sito ha un router lato browser: /admin, /privacy e /cookie NON sono
+# file veri sul disco. Senza questa regola l'hosting cerca quel file, non
+# lo trova e risponde 404 — ed è esattamente il motivo per cui /admin
+# funzionava in locale (dove ci pensa Vite) ma non una volta pubblicato.
+#
+# Con questa riga qualunque indirizzo sconosciuto riceve index.html con
+# stato 200, l'app parte e il router mostra la pagina giusta.
+# Le richieste di file veri (immagini, video, js, css) vengono servite
+# prima di arrivare qui, quindi non vengono toccate.
+
+/*    /index.html   200

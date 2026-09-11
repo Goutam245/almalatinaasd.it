@@ -1,0 +1,265 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Altezza reale dell'intestazione: serve allo scroll-spy e agli ancoraggi. */
+    --h-testata: 68px;
+  }
+  @media (min-width: 1024px) {
+    :root { --h-testata: 82px; }
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Le ancore non finiscono mai sotto la testata fissa. */
+    scroll-padding-top: calc(var(--h-testata) + 12px);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+  }
+
+  body {
+    @apply bg-inchiostro text-panna font-sans antialiased;
+    /* Nessuno scorrimento orizzontale, su nessun dispositivo.
+       ⚠️ Qui va `clip`, NON `hidden`. Con `overflow-x: hidden` il
+       browser calcola `overflow-y: auto` sull'altro asse e trasforma il
+       <body> in un contenitore che scorre per conto suo: da quel momento
+       `window.scrollTo()` non muove più niente e tutti i collegamenti
+       alle sezioni (#corsi, #galleria…) smettono di funzionare.
+       `clip` taglia l'eccesso orizzontale senza creare quel contenitore,
+       quindi la pagina resta ancorata allo scorrimento della finestra. */
+    overflow-x: clip;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Ogni elemento resta dentro la propria larghezza: niente barre laterali. */
+  *, *::before, *::after { box-sizing: border-box; min-width: 0; }
+
+  img, video, svg { max-width: 100%; display: block; }
+
+  ::selection { background: #EB008C; color: #fff; }
+
+  :focus-visible {
+    outline: 3px solid #69DBFF;
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Barra di scorrimento coerente col fondo scuro. */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #0B0B0F; }
+  ::-webkit-scrollbar-thumb { background: #2A2A34; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #EB008C; }
+}
+
+@layer components {
+  .contenitore {
+    @apply mx-auto w-full px-5 sm:px-8 lg:px-12;
+    max-width: 1320px;
+  }
+
+  /* ── Titoli ──────────────────────────────────────────────────────────
+     font-display è condensato: serve un tracking leggermente aperto per
+     non impastare le maiuscole nei corpi grandi.
+
+     ⚠️ REGOLA: la larghezza massima di un titolo si scrive in `ch` SOLO
+     sul titolo stesso, mai su un div che lo contiene. L'unità `ch` si
+     calcola sulla dimensione del testo dell'elemento su cui è scritta:
+     messa su un contenitore da 16px vale un decimo di quanto ci si
+     aspetta, e il titolo finisce spezzato una parola per riga.
+     Sui contenitori si usano rem o px. */
+  .titolo-sezione {
+    @apply font-display font-extrabold uppercase tracking-[0.005em];
+    font-size: clamp(2.15rem, 6.6vw, 5.6rem);
+    line-height: 0.88;
+    /* Righe bilanciate: niente parole isolate a fine titolo. */
+    text-wrap: balance;
+    /* L'accento di «Com'È» non deve mai essere tagliato in alto. */
+    padding-top: 0.06em;
+  }
+  .titolo-hero {
+    @apply font-display font-black uppercase tracking-[0.004em];
+    font-size: clamp(2.6rem, 8.2vw, 7rem);
+    line-height: 0.86;
+    padding-top: 0.05em;
+  }
+  .corsivo {
+    @apply font-serif italic font-normal normal-case tracking-normal;
+    /* Il corsivo ha un'inclinazione: senza questo respiro l'ultima
+       lettera tocca il bordo del contenitore. */
+    padding-right: 0.08em;
+  }
+  .occhiello {
+    @apply font-sans text-[0.68rem] sm:text-xs font-semibold uppercase tracking-[0.26em];
+  }
+
+  /* Colonna di testo: larghezze in rem, mai in ch su un contenitore. */
+  .colonna-titolo { max-width: 30rem; }
+  @media (min-width: 1024px) { .colonna-titolo { max-width: 34rem; } }
+
+  /* ── Testo sopra i video ─────────────────────────────────────────────
+     Doppia difesa: la velatura sotto + questa ombra sopra. Anche sul
+     fotogramma più chiaro il testo resta leggibile. */
+  .testo-su-video {
+    text-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.6),
+      0 3px 14px rgba(0, 0, 0, 0.55),
+      0 8px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  /* ── Pulsanti ─────────────────────────────────────────────────────── */
+  .btn {
+    @apply relative inline-flex items-center justify-center gap-2.5 rounded-full
+           font-sans font-semibold text-center transition-all duration-300 ease-onda
+           px-6 py-3.5 text-[0.95rem] sm:px-8 sm:py-4 sm:text-base;
+    /* Sempre cliccabile comodamente col pollice. */
+    min-height: 52px;
+  }
+  .btn-primario {
+    @apply btn text-white;
+    background: linear-gradient(96deg, #EB008C 0%, #F6931D 100%);
+    box-shadow: 0 6px 24px -6px rgba(235, 0, 140, 0.55);
+  }
+  .btn-primario:hover {
+    box-shadow: 0 10px 34px -6px rgba(235, 0, 140, 0.75);
+    transform: translateY(-2px);
+  }
+  .btn-giallo {
+    @apply btn text-inchiostro;
+    background: linear-gradient(96deg, #FFF200 0%, #F6931D 100%);
+    box-shadow: 0 6px 24px -6px rgba(255, 242, 0, 0.4);
+  }
+  .btn-giallo:hover { transform: translateY(-2px); box-shadow: 0 10px 34px -6px rgba(255, 242, 0, 0.6); }
+  .btn-fantasma {
+    @apply btn text-panna border border-white/30 bg-white/[0.06] backdrop-blur-sm;
+  }
+  .btn-fantasma:hover { @apply bg-white/[0.14] border-white/55; transform: translateY(-2px); }
+  .btn-verde {
+    @apply btn text-white;
+    background: #25D366;
+    box-shadow: 0 6px 24px -6px rgba(37, 211, 102, 0.5);
+  }
+  .btn-verde:hover { transform: translateY(-2px); background: #1FBE5A; }
+
+  /* Nota: non esiste nessuna classe CSS che nasconda il contenuto.
+     Lo stato iniziale delle animazioni lo imposta GSAP a runtime, così
+     senza JavaScript la pagina è leggibile per intero. */
+
+  /* Maschera per il testo che sale riga per riga.
+
+     Serve a nascondere la riga finché sta sotto la sua linea di base, ma
+     deve tagliare SOLO in verticale: con `overflow:hidden` si tagliavano
+     anche le parole troppo lunghe per il contenitore, e il titolo usciva
+     mozzato («IL COR…» invece di «Il corpo»).
+     `clip-path` con inset negativi lascia respirare i lati e la parte
+     alta — dove vivono gli accenti — e taglia solo sul bordo inferiore. */
+  .maschera-riga {
+    display: block;
+    clip-path: inset(-0.35em -100vw 0 -100vw);
+  }
+  .maschera-riga > span { display: block; will-change: transform; }
+
+  .bordo-sfumato {
+    border-image: linear-gradient(90deg, #EB008C, #F6931D, #FFF200, #8CC63F, #00AEEF, #4D56CD) 1;
+  }
+}
+
+@layer components {
+  /* ── Schermata di apertura ── */
+  .scia-colore {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      transparent 34%,
+      #eb008c 44%,
+      #f6931d 52%,
+      #fff200 60%,
+      #00aeef 68%,
+      transparent 78%,
+      transparent 100%
+    );
+    background-size: 260% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    mix-blend-mode: screen;
+    animation: passataColore 1.7s cubic-bezier(0.4, 0, 0.2, 1) 0.15s both;
+  }
+  .filo-avanzamento {
+    background: linear-gradient(90deg, #eb008c, #f6931d, #fff200, #8cc63f, #00aeef, #4d56cd);
+    transform-origin: left center;
+    animation: riempiFilo 1.5s cubic-bezier(0.32, 0, 0.2, 1) both;
+  }
+}
+
+@keyframes passataColore {
+  from { background-position: 130% 0; }
+  to   { background-position: -60% 0; }
+}
+@keyframes riempiFilo {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+/* Bagliori d'ambiente dell'hero: deriva lentissima, solo transform. */
+@keyframes derivaLuce {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-4%, 5%, 0) scale(1.14); }
+}
+
+@layer utilities {
+  .testo-arcobaleno {
+    background: linear-gradient(96deg, #EB008C 0%, #F6931D 26%, #FFF200 48%, #8CC63F 68%, #00AEEF 86%, #8285CD 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    /* Se il gradiente non si applica il testo resta comunque visibile. */
+    -webkit-text-fill-color: transparent;
+  }
+  .grana::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .pieno-schermo { min-height: 100svh; }
+}
+
+/* Cursore del volume nella lente: tinte del marchio, comodo da toccare. */
+.cursore-volume {
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(90deg, #eb008c, #f6931d);
+  border-radius: 99px;
+}
+.cursore-volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f7f5f2;
+  border: 2px solid #0b0b0f;
+  cursor: pointer;
+}
+.cursore-volume::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f7f5f2;
+  border: 2px solid #0b0b0f;
+  cursor: pointer;
+}
