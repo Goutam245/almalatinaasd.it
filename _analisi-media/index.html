@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<title>Analisi video</title>
+<style>
+  body { margin:0; background:#101014; color:#fff; font:13px/1.4 system-ui, sans-serif; }
+  header { padding:4px 8px; background:#1c1c24; }
+  h1 { margin:0; font-size:13px; display:inline; }
+  .meta { color:#9ad; font-size:12px; font-family:ui-monospace, monospace; display:inline; margin-left:10px; }
+  .grid { display:grid; grid-template-columns:repeat(3, max-content); gap:3px; padding:4px; }
+  figure { margin:0; position:relative; background:#000; }
+  canvas { width:100%; height:auto; display:block; }
+  figcaption { position:absolute; left:0; bottom:0; background:rgba(0,0,0,.78);
+    color:#ffe37a; font:11px ui-monospace, monospace; padding:2px 5px; }
+  #lum { padding:4px 8px; font:11px/1.25 ui-monospace, monospace; color:#8f8; white-space:pre; }
+  #status { color:#f88; padding:6px 14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">…</h1>
+  <div class="meta" id="meta">caricamento…</div>
+</header>
+<div id="status"></div>
+<div class="grid" id="grid"></div>
+<div id="lum"></div>
+
+<script>
+const params  = new URLSearchParams(location.search)
+const file    = params.get('v')
+const SHOTS   = parseInt(params.get('n') || '6', 10)
+const CW      = parseInt(params.get('w') || '258', 10)
+
+const $ = id => document.getElementById(id)
+$('title').textContent = file || 'nessun file (?v=...)'
+
+const video = document.createElement('video')
+video.src = '/video/' + file
+video.muted = true
+video.playsInline = true
+video.preload = 'auto'
+video.crossOrigin = 'anonymous'
+
+const once = (el, ev) => new Promise(r => el.addEventListener(ev, r, { once: true }))
+
+function bandStats(ctx, w, h, y0, y1) {
+  const d = ctx.getImageData(0, Math.floor(y0 * h), w, Math.max(1, Math.floor((y1 - y0) * h))).data
+  let sum = 0, n = 0, sq = 0
+  for (let i = 0; i < d.length; i += 16) {          // sample every 4th px
+    const L = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]
+    sum += L; sq += L * L; n++
+  }
+  const mean = sum / n
+  return { mean, sd: Math.sqrt(Math.max(0, sq / n - mean * mean)) }
+}
+
+;(async () => {
+  try {
+    await once(video, 'loadedmetadata')
+    const dur = video.duration, vw = video.videoWidth, vh = video.videoHeight
+    $('meta').textContent =
+      `${vw}x${vh}  ·  ratio ${(vw / vh).toFixed(3)}  ·  ${dur.toFixed(2)}s  ·  ${(video.webkitVideoDecodedByteCount|0)}`
+
+    const CH = Math.round(CW * vh / vw)
+    const acc = { top: [], mid: [], bot: [], all: [] }
+
+    for (let i = 0; i < SHOTS; i++) {
+      const t = Math.min(dur - 0.05, (dur * (i + 0.5)) / SHOTS)
+      video.currentTime = t
+      await once(video, 'seeked')
+
+      const fig = document.createElement('figure')
+      const cv  = document.createElement('canvas')
+      cv.width = CW; cv.height = CH
+      const ctx = cv.getContext('2d', { willReadFrequently: true })
+      ctx.drawImage(video, 0, 0, CW, CH)
+      const cap = document.createElement('figcaption')
+      cap.textContent = t.toFixed(2) + 's'
+      fig.append(cv, cap)
+      $('grid').append(fig)
+
+      const top = bandStats(ctx, CW, CH, 0.00, 0.22)
+      const mid = bandStats(ctx, CW, CH, 0.33, 0.72)
+      const bot = bandStats(ctx, CW, CH, 0.74, 1.00)
+      const all = bandStats(ctx, CW, CH, 0.00, 1.00)
+      acc.top.push(top); acc.mid.push(mid); acc.bot.push(bot); acc.all.push(all)
+    }
+
+    const avg = a => (a.reduce((s, x) => s + x.mean, 0) / a.length)
+    const avsd = a => (a.reduce((s, x) => s + x.sd, 0) / a.length)
+    const rng = a => {
+      const m = a.map(x => x.mean)
+      return Math.max(...m) - Math.min(...m)
+    }
+    $('lum').textContent =
+      `LUMINANZA MEDIA (0-255)  |  sd = contrasto interno  |  range = sfarfallio fra i frame\n` +
+      `  fascia ALTA  (0-22%)   mean ${avg(acc.top).toFixed(1).padStart(6)}   sd ${avsd(acc.top).toFixed(1).padStart(5)}   range ${rng(acc.top).toFixed(1)}\n` +
+      `  fascia MEDIA (33-72%)  mean ${avg(acc.mid).toFixed(1).padStart(6)}   sd ${avsd(acc.mid).toFixed(1).padStart(5)}   range ${rng(acc.mid).toFixed(1)}\n` +
+      `  fascia BASSA (74-100%) mean ${avg(acc.bot).toFixed(1).padStart(6)}   sd ${avsd(acc.bot).toFixed(1).padStart(5)}   range ${rng(acc.bot).toFixed(1)}\n` +
+      `  INTERO FRAME           mean ${avg(acc.all).toFixed(1).padStart(6)}   sd ${avsd(acc.all).toFixed(1).padStart(5)}   range ${rng(acc.all).toFixed(1)}\n` +
+      `  durata ${dur.toFixed(2)}s · ${vw}x${vh}`
+    document.title = 'DONE ' + file
+  } catch (e) {
+    $('status').textContent = 'ERRORE: ' + e.message
+    document.title = 'ERR ' + file
+  }
+})()
+</script>
+</body>
+</html>
